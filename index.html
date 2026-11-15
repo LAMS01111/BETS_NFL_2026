@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rachas de Props NFL — 365Scores verificado</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --border:rgba(11,11,11,.10);
+  --good:#0ca30c; --good-text:#006300; --good-bg:#e6f5e6;
+  --bad:#d03b3b; --bad-text:#a52a2a; --bad-bg:#fbe9e9;
+  --warn:#fab219; --warn-text:#7a5200; --warn-bg:#fff4d6;
+  --accent:#2a78d6;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --border:rgba(255,255,255,.10);
+    --good:#0ca30c; --good-text:#4fd14f; --good-bg:#15301a;
+    --bad:#e66767; --bad-text:#ff8a8a; --bad-bg:#3a1b1b;
+    --warn:#fab219; --warn-text:#ffd27a; --warn-bg:#3a2f12;
+    --accent:#3987e5;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:16px 20px 8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:20px;margin:0;font-weight:650}
+.sub{color:var(--ink-2);font-size:13px;margin-top:2px}
+button,select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+.bar{padding:8px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-2)}
+.bar label > *{min-width:120px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;background:var(--surface);user-select:none}
+.chip.on{background:var(--accent);color:#fff;border-color:transparent}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:8px 20px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.tile .v{font-size:26px;font-weight:650;line-height:1.1}
+.tile .l{color:var(--ink-2);font-size:12px;margin-top:4px}
+#progress{padding:6px 20px;color:var(--ink-2);font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#progress[hidden],[hidden]{display:none}
+.pbar{flex:1;min-width:160px;height:6px;background:var(--grid);border-radius:3px;overflow:hidden}
+.pbar>div{height:100%;width:0;background:var(--accent);transition:width .2s}
+main{padding:8px 20px 40px}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+th,td{padding:9px 10px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--grid)}
+th{font-size:12px;color:var(--ink-2);font-weight:600;background:var(--surface-2);cursor:pointer;white-space:nowrap;position:sticky;top:0;z-index:1}
+th .arrow{color:var(--muted);font-size:10px;margin-left:3px}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-weight:650;font-size:13px;white-space:nowrap}
+.badge.over{background:var(--good-bg);color:var(--good-text)}
+.badge.under{background:var(--bad-bg);color:var(--bad-text)}
+.badge.push{background:var(--surface-2);color:var(--ink-2)}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.st.ok{color:var(--good-text)}
+.st.warn{color:var(--warn-text)}
+.st.bad{color:var(--bad-text)}
+.st.mute{color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st.ok .dot{background:var(--good)} .st.warn .dot{background:var(--warn)} .st.bad .dot{background:var(--bad)} .st.mute .dot{background:var(--muted)}
+.seq{display:flex;gap:3px;flex-wrap:nowrap}
+.seq span{width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.seq .o{background:var(--good)} .seq .u{background:var(--bad)} .seq .p{background:var(--muted)}
+.seq .gap{outline:2px dashed var(--warn);outline-offset:-2px}
+.seq .dnp{background:transparent;color:var(--muted);border:1px dashed var(--grid)}
+.sug{font-weight:650}
+.sug small{font-weight:400;color:var(--ink-2)}
+tr.detail td{background:var(--surface-2);padding:10px 14px 14px}
+.dt{width:100%;border:0;background:transparent;font-size:13px}
+.dt th{background:transparent;position:static;cursor:default;border-bottom:1px solid var(--grid);padding:5px 8px}
+.dt td{padding:5px 8px;border-bottom:1px solid var(--grid)}
+.dt tr.gap td{background:var(--warn-bg)}
+.dt tr.dnp td{color:var(--muted)}
+.note{color:var(--ink-2);font-size:12px;margin:6px 0 0}
+.empty{padding:40px;text-align:center;color:var(--ink-2);background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;padding:4px 20px 8px;color:var(--ink-2);font-size:12px;align-items:center}
+.err{background:var(--bad-bg);color:var(--bad-text);padding:10px 14px;border-radius:10px;margin:8px 20px;white-space:pre-wrap}
+.cards{display:none}
+@media (max-width:820px){
+  header,.bar,.tiles,main,#progress,.legend{padding-left:12px;padding-right:12px}
+  table.main{display:none}
+  .cards{display:grid;gap:10px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .card .name{font-weight:650;font-size:15px}
+  .card .meta{color:var(--ink-2);font-size:12px}
+  .card .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:8px;font-size:13px}
+  .card .grid b{display:block;font-size:11px;color:var(--muted);font-weight:500}
+  .card .det{margin-top:8px;overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Rachas de props NFL</h1>
+    <div class="sub" id="status">Líneas de 365Scores · solo temporada regular en curso · cruzadas con box scores de cada partido</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <select id="fScope" title="Qué partidos cargar"><option value="week">Partidos de esta semana</option><option value="all">Todos los próximos (2 semanas)</option></select>
+    <button id="btnLoad" class="primary">Cargar / actualizar</button>
+    <button id="btnHard" title="Ignora la caché local y vuelve a descargar todo">Recargar todo</button>
+  </div>
+</header>
+
+<div id="progress" hidden><span id="ptext"></span><div class="pbar"><div id="pfill"></div></div></div>
+<div id="error" class="err" hidden></div>
+
+<div class="bar" id="filters">
+  <label>Racha mínima
+    <select id="fMin"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select>
+  </label>
+  <label>Dirección de la racha
+    <select id="fDir"><option value="">Todas</option><option value="O">Over (Más)</option><option value="U">Under (Menos)</option></select>
+  </label>
+  <label>Verificación
+    <select id="fVer"><option value="okadj">Verificadas o ajustadas</option><option value="ok">Solo verificadas</option><option value="all">Todas (incl. rotas)</option></select>
+  </label>
+  <label>Partido
+    <select id="fGame"><option value="">Todos</option></select>
+  </label>
+  <label>Equipo
+    <select id="fTeam"><option value="">Todos</option></select>
+  </label>
+  <label>Jugador
+    <input id="fName" placeholder="Buscar…">
+  </label>
+  <label>Contar racha con
+    <select id="fBase"><option value="ver">Racha verificada</option><option value="raw">Racha según 365Scores</option></select>
+  </label>
+</div>
+<div class="bar"><div class="chips" id="mChips"></div></div>
+
+<div class="tiles" id="tiles"></div>
+<div class="legend">
+  <span><span class="badge over">▲ Over</span> la racha es de overs → apuesta contraria: <b>Menos</b></span>
+  <span><span class="badge under">▼ Under</span> la racha es de unders → apuesta contraria: <b>Más</b></span>
+  <span><span class="st ok"><i class="dot"></i>Verificada</span> ningún juego jugado falta en el historial</span>
+  <span><span class="st warn"><i class="dot"></i>Ajustada</span> había juegos sin registrar; se evaluaron vs. la línea actual y la racha sigue</span>
+  <span><span class="st bad"><i class="dot"></i>Rota</span> un juego sin registrar la corta</span>
+</div>
+
+<main>
+  <div id="tableWrap"></div>
+  <div id="cards" class="cards"></div>
+</main>
+
+<script>
+(() => {
+'use strict';
+const API = 'https://webws.365scores.com/web';
+const Q = 'appTypeId=5&langId=29&timezoneName=America%2FMexico_City&userCountryId=31';
+const COMP = 352;              // NFL
+const BOOK = 4;                // BWIN (el que muestra 365Scores MX)
+const SEASON_FALLBACK = '2026-09-10'; // inicio temporada regular 2026 (por si la API no lo da)
+const CACHE_KEY = 'props365_nfl_v1';
+const DETAIL_TTL_MS = 6 * 3600 * 1000;
+
+// Mercado (lineTypeId) → cómo obtener la estadística real del box score
+// cat = categoría de playersStatistics, col = columnNum
+const MARKETS = {
+  86: { short: 'Yds pase',        stat: s => s.c1_3 },
+  87: { short: 'Yds recepción',   stat: s => s.c3_11 },
+  88: { short: 'Yds carrera',     stat: s => s.c2_7 },
+  90: { short: 'Yds carr+rec',    stat: s => (s.c2_7 == null && s.c3_11 == null) ? null : (s.c2_7 || 0) + (s.c3_11 || 0) },
+  91: { short: 'TD pase',         stat: s => s.c1_4 },
+  92: { short: 'Pase más largo',  stat: s => s.c1_84 },
+  93: { short: 'Recep. más larga',stat: s => s.c3_13 },
+  94: { short: 'Intercepciones',  stat: s => s.c1_5 },
+  95: { short: 'Pts pateador',   stat: s => (s.c9_32 == null && s.c9_35 == null) ? null : (s.c9_32 || 0) * 3 + (s.c9_35 || 0) }, // FG×3 + puntos extra (así lo registra 365Scores)
+  97: null, // Marcar touchdown: no es over/under, se omite
+};
+const DEFAULT_MARKETS = [86,87,88,90,91,94,92,93,95];
+
+const $ = id => document.getElementById(id);
+const ts = iso => Date.parse(iso) || 0; // la API mezcla offsets (-06:00 / Z): comparar siempre como timestamp
+const fmtDate = iso => { const d = new Date(iso); return d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit'}); };
+const fmtDT = iso => { const d = new Date(iso); return d.toLocaleString('es-MX',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); };
+
+// ---------- caché local ----------
+let cache = { details: {}, box: {}, meta: {} };
+try { const raw = localStorage.getItem(CACHE_KEY); if (raw) cache = Object.assign(cache, JSON.parse(raw)); } catch (e) {}
+function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) {} }
+
+// ---------- red ----------
+async function getJSON(url, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (e) {
+      if (i === tries - 1) throw e;
+      await new Promise(res => setTimeout(res, 600 * (i + 1)));
+    }
+  }
+}
+async function pool(items, n, fn, onEach) {
+  let i = 0, done = 0; const out = new Array(items.length);
+  async function worker() {
+    while (i < items.length) { const k = i++; try { out[k] = await fn(items[k], k); } catch (e) { out[k] = { error: String(e) }; } done++; onEach && onEach(done, items.length); }
+  }
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, worker));
+  return out;
+}
+function progress(text, frac) {
+  $('progress').hidden = false; $('ptext').textContent = text;
+  $('pfill').style.width = Math.round((frac || 0) * 100) + '%';
+}
+
+// ---------- estado ----------
+let seasonGames = [];      // partidos de temporada regular (terminados + futuros)
+let seasonGameIds = new Set();
+let seasonStart = SEASON_FALLBACK;
+let upcoming = [];         // próximos partidos con props
+let rows = [];             // una fila por jugador × mercado
+let selectedMarkets = new Set(DEFAULT_MARKETS);
+let sortKey = 'streak', sortDir = -1;
+let expanded = new Set();
+
+// ---------- 1. temporada: calendario ----------
+async function loadSeason(hard) {
+  const now = Date.now();
+  if (!hard && cache.meta.season && now - cache.meta.season.ts < 3600 * 1000 && cache.meta.season.games) {
+    seasonGames = cache.meta.season.games;
+  } else {
+    const games = new Map();
+    const take = g => {
+      if (g.competitionId !== COMP) return;
+      games.set(g.id, { id: g.id, startTime: g.startTime, round: g.roundNum, roundName: g.roundName, season: g.seasonNum, stage: g.stageNum,
+        status: g.statusGroup, statusText: g.statusText, homeId: g.homeCompetitor.id, home: g.homeCompetitor.name, awayId: g.awayCompetitor.id, away: g.awayCompetitor.name,
+        hs: g.homeCompetitor.score, as: g.awayCompetitor.score });
+    };
+    progress('Descargando calendario de la temporada…', 0.02);
+    const cur = await getJSON(`${API}/games/current/?${Q}&competitions=${COMP}`);
+    (cur.games || []).forEach(take);
+    const fx = await getJSON(`${API}/games/fixtures/?${Q}&competitions=${COMP}`);
+    (fx.games || []).forEach(take);
+    let res = await getJSON(`${API}/games/results/?${Q}&competitions=${COMP}`);
+    (res.games || []).forEach(take);
+    // retroceder página por página hasta salir de la temporada regular actual
+    let seasonNum = null, stage = null;
+    const latest = [...games.values()].sort((a, b) => ts(b.startTime) - ts(a.startTime))[0];
+    if (latest) { seasonNum = latest.season; stage = latest.stage; }
+    let guard = 0;
+    while (res.paging && res.paging.previousPage && guard++ < 12) {
+      const gs = res.games || [];
+      const oldest = gs.length ? gs.reduce((m, g) => ts(g.startTime) < ts(m.startTime) ? g : m) : null;
+      if (oldest && (oldest.seasonNum !== seasonNum || oldest.stageNum !== stage || oldest.roundNum === 1)) break;
+      progress(`Descargando calendario… (${games.size} partidos)`, 0.02 + guard * 0.01);
+      res = await getJSON('https://webws.365scores.com' + res.paging.previousPage);
+      (res.games || []).forEach(take);
+    }
+    seasonGames = [...games.values()].filter(g => g.season === seasonNum && g.stage === stage);
+    cache.meta.season = { ts: now, games: seasonGames }; saveCache();
+  }
+  seasonGameIds = new Set(seasonGames.map(g => g.id));
+  const firstTs = Math.min(...(seasonGames.filter(g => g.round === 1).length ? seasonGames.filter(g => g.round === 1) : seasonGames).map(g => ts(g.startTime)));
+  seasonStart = isFinite(firstTs) ? new Date(firstTs).toISOString().slice(0, 10) : SEASON_FALLBACK;
+  const cutoff = Date.now() - 5 * 60000;
+  let future = seasonGames.filter(g => g.status !== 4 && g.status !== 3 && ts(g.startTime) > cutoff)
+    .sort((a, b) => ts(a.startTime) - ts(b.startTime));
+  if ($('fScope').value === 'week' && future.length) {
+    const wk = Math.min(...future.map(g => g.round));
+    future = future.filter(g => g.round === wk);
+  }
+  upcoming = future.slice(0, 32);
+}
+
+// ---------- 2. props de los próximos partidos ----------
+async function loadProps() {
+  const out = [];
+  await pool(upcoming, 4, async g => {
+    const p = await getJSON(`${API}/bets/proposition/?${Q}&gameId=${g.id}&topBookmakerId=${BOOK}&fullData=true`);
+    const athletes = new Map((p.athletes || []).map(a => [a.id, a]));
+    const comps = new Map((p.competitors || []).map(c => [c.id, c]));
+    for (const pb of (p.propositionBets || [])) {
+      if (!MARKETS[pb.lineTypeId]) continue;
+      for (const sec of (pb.sections || [])) {
+        const team = comps.get(sec.competitorId);
+        for (const r of (sec.rows || [])) {
+          if (!r.hasRecords || r.parameter == null) continue;
+          const a = athletes.get(r.athleteId) || {};
+          const under = (r.options || []).find(o => o.num === 1), over = (r.options || []).find(o => o.num === 2);
+          out.push({
+            key: `${g.id}_${r.athleteId}_${pb.lineTypeId}`,
+            gameId: g.id, game: g, athleteId: r.athleteId, name: a.name || ('#' + r.athleteId), pos: r.secondaryName || '',
+            teamId: sec.competitorId, team: team ? team.name : (a.clubName || ''),
+            oppName: sec.competitorId === g.homeId ? g.away : g.home, isHome: sec.competitorId === g.homeId,
+            lineTypeId: pb.lineTypeId, market: pb.name, mshort: MARKETS[pb.lineTypeId].short,
+            line: r.parameter, avg: r.currentValue,
+            oddsOver: over && over.rate ? over.rate.decimal : null, oddsUnder: under && under.rate ? under.rate.decimal : null,
+          });
+        }
+      }
+    }
+  }, (d, t) => progress(`Leyendo props de ${t} partidos… (${d}/${t})`, 0.1 + 0.1 * d / t));
+  return out;
+}
+
+// ---------- 3. historial de líneas por jugador × mercado ----------
+function parseRecord(rw) {
+  const txt = (rw.values || []).map(v => v.text);
+  const val = parseFloat((txt[1] || '').replace(',', '.'));
+  const m = /([+\-=])\s*\(?\s*([\d.,]+)/.exec(txt[2] || '');
+  const sign = m ? m[1] : null;
+  const line = m ? parseFloat(m[2].replace(',', '.')) : null;
+  return { gameId: rw.gameId, date: rw.date, opp: rw.opponentLabel, score: (rw.values && rw.values[0] && rw.values[0].scores) || null,
+    value: isNaN(val) ? null : val, line, dir: sign === '+' ? 'O' : sign === '-' ? 'U' : sign === '=' ? 'P' : null, src: '365' };
+}
+async function loadDetails(hard) {
+  const now = Date.now();
+  await pool(rows, 8, async row => {
+    const ck = row.key;
+    const c = cache.details[ck];
+    if (!hard && c && now - c.ts < DETAIL_TTL_MS) { row.records = c.recs; row.recordsText = c.txt; return; }
+    const d = await getJSON(`${API}/bets/proposition/details?${Q}&athleteId=${row.athleteId}&gameId=${row.gameId}&lineTypeId=${row.lineTypeId}&topBookmakerId=${BOOK}`);
+    const recs = ((d.propsRecordsTable && d.propsRecordsTable.rows) || []).map(parseRecord);
+    row.records = recs; row.recordsText = d.recordsText || '';
+    cache.details[ck] = { ts: now, recs, txt: row.recordsText };
+  }, (d, t) => { progress(`Descargando historial de líneas… (${d}/${t})`, 0.2 + 0.5 * d / t); if (d % 50 === 0) saveCache(); });
+  // limpiar caché de partidos que ya pasaron
+  const live = new Set(rows.map(r => r.key));
+  for (const k of Object.keys(cache.details)) if (!live.has(k) && now - (cache.details[k].ts || 0) > 3 * 86400e3) delete cache.details[k];
+  saveCache();
+}
+
+// ---------- 4. box scores para verificar juegos jugados ----------
+function compactBox(gameJson) {
+  const g = gameJson.game; const out = { athletes: {} };
+  const memberToAth = new Map((g.members || []).map(m => [m.id, m.athleteId]));
+  for (const side of [g.homeCompetitor, g.awayCompetitor]) {
+    const lu = side && side.lineups; if (!lu) continue;
+    for (const m of (lu.members || [])) {
+      const aid = memberToAth.get(m.id); if (aid == null) continue;
+      out.athletes[aid] = out.athletes[aid] || { st: m.status, team: side.id };
+    }
+    const ps = lu.playersStatistics;
+    for (const t of ((ps && ps.tables) || [])) {
+      for (const r of (t.rows || [])) {
+        const aid = memberToAth.get(r.playerId); if (aid == null) continue;
+        const o = out.athletes[aid] = out.athletes[aid] || { st: 1, team: side.id };
+        o.has = true;
+        for (const v of (r.values || [])) { const n = parseFloat(v.value); if (!isNaN(n)) o[`c${t.categoryId}_${v.columnNum}`] = n; }
+      }
+    }
+  }
+  out.hasLineups = !!(g.homeCompetitor.lineups && g.awayCompetitor.lineups);
+  return out;
+}
+async function ensureBox(gameId) {
+  if (cache.box[gameId]) return cache.box[gameId];
+  const j = await getJSON(`${API}/game/?${Q}&gameId=${gameId}`);
+  const b = compactBox(j);
+  if (b.hasLineups) cache.box[gameId] = b;
+  return b;
+}
+function playerInBox(box, athleteId) {
+  const a = box && box.athletes && box.athletes[athleteId];
+  if (!a) return { played: false, stats: null };
+  const played = a.st === 1 || !!a.has;
+  return { played, stats: a };
+}
+
+// ---------- 5. rachas ----------
+function computeRaw(recs) {
+  if (!recs.length || !recs[0].dir || recs[0].dir === 'P') return { dir: recs[0] && recs[0].dir || null, n: 0 };
+  const dir = recs[0].dir; let n = 0;
+  for (const r of recs) { if (r.dir === dir) n++; else break; }
+  return { dir, n };
+}
+async function verifyAll(hard) {
+  // juegos de cada equipo (terminados)
+  const byTeam = new Map();
+  for (const g of seasonGames) {
+    if (g.status !== 4) continue;
+    for (const t of [g.homeId, g.awayId]) { if (!byTeam.has(t)) byTeam.set(t, []); byTeam.get(t).push(g); }
+  }
+  // qué partidos hay que descargar
+  const need = new Set();
+  const seasonStartTs = ts(seasonStart);
+  for (const row of rows) {
+    row.seasonRecs = (row.records || []).filter(r => seasonGameIds.has(r.gameId) || (r.date && ts(r.date) >= seasonStartTs))
+      .sort((a, b) => ts(b.date) - ts(a.date));
+    row.raw = computeRaw(row.seasonRecs);
+    const ids = new Set(row.seasonRecs.map(r => r.gameId));
+    // ventana a verificar: desde el juego más antiguo de la racha (según 365) hasta hoy
+    // sin ningún registro de 365 en esta temporada no hay racha que verificar (no inventamos una solo con box scores)
+    const oldest = row.raw.n ? ts(row.seasonRecs[row.raw.n - 1].date) : (row.seasonRecs[0] ? ts(row.seasonRecs[0].date) : null);
+    row.gapCandidates = oldest == null ? [] : (byTeam.get(row.teamId) || []).filter(g => !ids.has(g.id) && ts(g.startTime) >= oldest - 12 * 3600e3 && g.id !== row.gameId);
+    row.gapCandidates.forEach(g => { if (!cache.box[g.id]) need.add(g.id); });
+  }
+  const list = [...need];
+  await pool(list, 4, id => ensureBox(id), (d, t) => progress(`Verificando juegos jugados (box scores)… (${d}/${t})`, 0.7 + 0.28 * d / t));
+  saveCache();
+  for (const row of rows) {
+    const mk = MARKETS[row.lineTypeId];
+    const timeline = row.seasonRecs.map(r => Object.assign({}, r));
+    let unverified = false;
+    for (const g of row.gapCandidates) {
+      const box = cache.box[g.id];
+      if (!box) { unverified = true; continue; }
+      const { played, stats } = playerInBox(box, row.athleteId);
+      const opp = (g.homeId === row.teamId ? 'VS ' + g.away : '@ ' + g.home);
+      if (!played) { timeline.push({ gameId: g.id, date: g.startTime, opp, value: null, line: null, dir: 'DNP', src: 'box' }); continue; }
+      const v = mk.stat(stats);
+      const val = v == null ? 0 : v;
+      const dir = val > row.line ? 'O' : val < row.line ? 'U' : 'P';
+      timeline.push({ gameId: g.id, date: g.startTime, opp, value: val, line: row.line, dir, src: 'box', score: [g.hs, g.as], home: g.homeId === row.teamId });
+    }
+    timeline.sort((a, b) => ts(b.date) - ts(a.date));
+    row.timeline = timeline;
+    const played = timeline.filter(t => t.dir !== 'DNP');
+    const gaps = played.filter(t => t.src === 'box');
+    // racha verificada
+    let vdir = null, vn = 0, brokenByGap = false, extended = false;
+    if (played.length && played[0].dir && played[0].dir !== 'P') {
+      vdir = played[0].dir;
+      for (const t of played) { if (t.dir === vdir) { vn++; if (t.src === 'box') extended = true; } else { if (t.src === 'box') brokenByGap = true; break; } }
+    }
+    row.ver = { dir: vdir, n: vn };
+    row.status = !row.seasonRecs.length ? 'sinhistorial' : unverified ? 'sinverificar' : brokenByGap ? 'rota' : (gaps.length ? 'ajustada' : 'ok');
+    row.gapsPlayed = gaps.length;
+    // récord de temporada (con línea de cada juego cuando existe)
+    row.seasonOver = played.filter(t => t.dir === 'O').length; row.seasonUnder = played.filter(t => t.dir === 'U').length;
+  }
+}
+
+// ---------- carga completa ----------
+let loading = false;
+async function loadAll(hard) {
+  if (loading) return; loading = true;
+  $('btnLoad').disabled = $('btnHard').disabled = true; $('error').hidden = true;
+  try {
+    await loadSeason(hard);
+    if (!upcoming.length) throw new Error('No encontré próximos partidos en la API de 365Scores.');
+    rows = await loadProps();
+    if (!rows.length) throw new Error('Los próximos partidos aún no tienen props publicadas.');
+    await loadDetails(hard);
+    await verifyAll(hard);
+    cache.meta.lastRun = Date.now(); saveCache();
+    $('progress').hidden = true;
+    buildFilters(); render();
+  } catch (e) {
+    $('progress').hidden = true;
+    $('error').hidden = false;
+    $('error').textContent = 'Error: ' + (e && e.message || e) + '\n\nSi abriste el archivo desde el celular o un visor que bloquea JavaScript, ábrelo en Chrome de escritorio (doble clic al archivo).';
+    console.error(e);
+  } finally { loading = false; $('btnLoad').disabled = $('btnHard').disabled = false; }
+}
+
+// ---------- filtros / render ----------
+function buildFilters() {
+  const games = [...new Map(rows.map(r => [r.gameId, r.game])).values()].sort((a, b) => ts(a.startTime) - ts(b.startTime));
+  $('fGame').innerHTML = '<option value="">Todos</option>' + games.map(g => `<option value="${g.id}">${g.away} @ ${g.home} · ${fmtDT(g.startTime)}</option>`).join('');
+  const teams = [...new Set(rows.map(r => r.team))].sort();
+  $('fTeam').innerHTML = '<option value="">Todos</option>' + teams.map(t => `<option>${t}</option>`).join('');
+  const mk = [...new Map(rows.map(r => [r.lineTypeId, r.market])).entries()];
+  $('mChips').innerHTML = mk.map(([id, name]) => `<span class="chip ${selectedMarkets.has(id) ? 'on' : ''}" data-m="${id}">${name}</span>`).join('');
+  $('mChips').querySelectorAll('.chip').forEach(c => c.onclick = () => { const id = +c.dataset.m; selectedMarkets.has(id) ? selectedMarkets.delete(id) : selectedMarkets.add(id); c.classList.toggle('on'); render(); });
+}
+function streakOf(r) { return $('fBase').value === 'raw' ? r.raw : r.ver; }
+function filtered() {
+  const min = +$('fMin').value, dir = $('fDir').value, ver = $('fVer').value, game = $('fGame').value, team = $('fTeam').value, name = $('fName').value.trim().toLowerCase();
+  return rows.filter(r => {
+    const s = streakOf(r);
+    if (!s.dir || s.dir === 'P' || s.n < min) return false;
+    if (dir && s.dir !== dir) return false;
+    if (!selectedMarkets.has(r.lineTypeId)) return false;
+    if (ver === 'ok' && r.status !== 'ok') return false;
+    if (ver === 'okadj' && !(r.status === 'ok' || r.status === 'ajustada')) return false;
+    if (game && String(r.gameId) !== game) return false;
+    if (team && r.team !== team) return false;
+    if (name && !r.name.toLowerCase().includes(name)) return false;
+    return true;
+  });
+}
+const STATUS = { ok: ['ok', 'Verificada'], ajustada: ['warn', 'Ajustada'], rota: ['bad', 'Rota por juego sin registrar'], sinverificar: ['mute', 'Sin verificar (box score no disponible)'], sinhistorial: ['mute', 'Sin historial 2026 en 365Scores'] };
+function badge(s) { if (!s.dir || s.dir === 'P') return '<span class="badge push">—</span>'; return `<span class="badge ${s.dir === 'O' ? 'over' : 'under'}">${s.dir === 'O' ? '▲' : '▼'} ${s.n} ${s.dir === 'O' ? 'Over' : 'Under'}</span>`; }
+function suggestion(r) {
+  const s = streakOf(r); if (!s.dir || s.dir === 'P') return '';
+  const bet = s.dir === 'O' ? 'Menos' : 'Más', odds = s.dir === 'O' ? r.oddsUnder : r.oddsOver;
+  return `<span class="sug">${bet} ${r.line}${odds ? ` <small>@ ${odds.toFixed(2)}</small>` : ''}</span>`;
+}
+function seq(r) {
+  return '<div class="seq">' + r.timeline.slice(0, 10).reverse().map(t => {
+    if (t.dir === 'DNP') return `<span class="dnp" title="${fmtDate(t.date)} ${t.opp}: no jugó">·</span>`;
+    const cls = t.dir === 'O' ? 'o' : t.dir === 'U' ? 'u' : 'p';
+    const gap = t.src === 'box' ? ' gap' : '';
+    const title = `${fmtDate(t.date)} ${t.opp}: ${t.value} vs ${t.line}${t.src === 'box' ? ' (sin registrar en 365, evaluado vs línea actual)' : ''}`;
+    return `<span class="${cls}${gap}" title="${title}">${t.dir === 'O' ? 'O' : t.dir === 'U' ? 'U' : '='}</span>`;
+  }).join('') + '</div>';
+}
+function detailTable(r) {
+  const trs = r.timeline.map(t => {
+    const cls = t.dir === 'DNP' ? 'dnp' : (t.src === 'box' ? 'gap' : '');
+    const res = t.dir === 'DNP' ? 'No jugó' : t.dir === 'O' ? '<span class="badge over">▲ Over</span>' : t.dir === 'U' ? '<span class="badge under">▼ Under</span>' : '<span class="badge push">= Push</span>';
+    const sc = t.score ? `${t.score[0]}-${t.score[1]}` : '';
+    return `<tr class="${cls}"><td>${fmtDate(t.date)}</td><td>${t.opp}</td><td>${sc}</td><td class="num">${t.value == null ? '—' : t.value}</td><td class="num">${t.line == null ? '—' : t.line}</td><td>${res}</td><td>${t.src === '365' ? 'Historial 365Scores' : t.dir === 'DNP' ? 'Box score' : 'Box score · vs línea actual'}</td></tr>`;
+  }).join('');
+  const st = STATUS[r.status];
+  return `<div><span class="st ${st[0]}"><i class="dot"></i>${st[1]}</span> · Racha según 365Scores: <b>${r.raw.n} ${r.raw.dir === 'O' ? 'Over' : r.raw.dir === 'U' ? 'Under' : ''}</b> · Verificada: <b>${r.ver.n} ${r.ver.dir === 'O' ? 'Over' : r.ver.dir === 'U' ? 'Under' : ''}</b> · Temporada: ${r.seasonOver} over / ${r.seasonUnder} under · Promedio (365): ${r.avg ?? '—'} · ${r.recordsText}</div>
+  <table class="dt" style="margin-top:8px"><thead><tr><th>Fecha</th><th>Rival</th><th>Marcador</th><th>Valor</th><th>Línea</th><th>Resultado</th><th>Fuente</th></tr></thead><tbody>${trs}</tbody></table>
+  <p class="note">Filas ámbar: partidos que el jugador sí jugó pero que 365Scores no incluye en el historial de este mercado; se evalúan contra la línea actual (${r.line}) porque no hay línea registrada de ese día. Solo se consideran partidos de la temporada regular en curso (desde ${seasonStart}).</p>`;
+}
+function render() {
+  const list = filtered();
+  const key = sortKey, dir = sortDir;
+  list.sort((a, b) => {
+    const pick = r => key === 'line' ? r.line : key === 'game' ? ts(r.game.startTime) : key === 'name' ? r.name : key === 'team' ? r.team : key === 'market' ? r.mshort : key === 'status' ? r.status : streakOf(r).n;
+    const va = pick(a), vb = pick(b);
+    return (va > vb ? 1 : va < vb ? -1 : 0) * dir || streakOf(b).n - streakOf(a).n;
+  });
+  // tiles
+  const all = rows.filter(r => selectedMarkets.has(r.lineTypeId));
+  const min = +$('fMin').value;
+  const withStreak = all.filter(r => streakOf(r).n >= min && streakOf(r).dir !== 'P');
+  const tiles = [
+    [list.length, 'rachas en vista'],
+    [withStreak.filter(r => r.status === 'ok').length, `verificadas (≥${min})`],
+    [withStreak.filter(r => r.status === 'ajustada').length, 'ajustadas (con juegos sin registrar)'],
+    [all.filter(r => r.raw.n >= min && r.status === 'rota').length, 'rachas de 365 que se rompen al verificar'],
+    [list.length ? Math.max(...list.map(r => streakOf(r).n)) : 0, 'racha más larga en vista'],
+    [upcoming.length, 'partidos con props'],
+  ];
+  $('tiles').innerHTML = tiles.map(([v, l]) => `<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  const last = cache.meta.lastRun ? new Date(cache.meta.lastRun).toLocaleString('es-MX') : '';
+  $('status').textContent = `${rows.length} props en ${upcoming.length} partidos · temporada regular desde ${seasonStart} · actualizado ${last}`;
+  const arrow = k => k === key ? `<span class="arrow">${dir < 0 ? '▼' : '▲'}</span>` : '';
+  if (!list.length) { $('tableWrap').innerHTML = '<div class="empty">Ninguna racha cumple los filtros actuales.</div>'; $('cards').innerHTML = ''; return; }
+  const head = `<thead><tr>
+    <th data-k="name">Jugador${arrow('name')}</th><th data-k="team">Equipo${arrow('team')}</th><th data-k="game">Partido${arrow('game')}</th>
+    <th data-k="market">Mercado${arrow('market')}</th><th data-k="line" style="text-align:right">Línea${arrow('line')}</th>
+    <th data-k="streak">Racha${arrow('streak')}</th><th>Últimos juegos (antiguo → reciente)</th><th data-k="status">Verificación${arrow('status')}</th><th>Apuesta contraria</th></tr></thead>`;
+  const body = list.map(r => {
+    const st = STATUS[r.status];
+    const base = $('fBase').value === 'raw' ? r.raw : r.ver;
+    const other = $('fBase').value === 'raw' ? r.ver : r.raw;
+    const note = other.n !== base.n ? `<div class="note">${$('fBase').value === 'raw' ? 'verificada' : 'según 365'}: ${other.n}</div>` : '';
+    return `<tr class="row" data-k="${r.key}"><td><b>${r.name}</b><div class="note">${r.pos}</div></td><td>${r.team}</td><td>${r.isHome ? 'vs' : '@'} ${r.oppName}<div class="note">${fmtDT(r.game.startTime)}</div></td>
+      <td>${r.market}</td><td class="num">${r.line}<div class="note">prom ${r.avg ?? '—'}</div></td><td>${badge(base)}${note}</td><td>${seq(r)}</td>
+      <td><span class="st ${st[0]}"><i class="dot"></i>${st[1].split(' (')[0]}</span>${r.gapsPlayed ? `<div class="note">${r.gapsPlayed} juego(s) sin registrar</div>` : ''}</td><td>${suggestion(r)}</td></tr>` +
+      (expanded.has(r.key) ? `<tr class="detail"><td colspan="9">${detailTable(r)}</td></tr>` : '');
+  }).join('');
+  $('tableWrap').innerHTML = `<table class="main">${head}<tbody>${body}</tbody></table>`;
+  $('tableWrap').querySelectorAll('th[data-k]').forEach(th => th.onclick = () => { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'name' || k === 'team' || k === 'market' || k === 'game' ? 1 : -1; } render(); });
+  $('tableWrap').querySelectorAll('tr.row').forEach(tr => tr.onclick = () => { const k = tr.dataset.k; expanded.has(k) ? expanded.delete(k) : expanded.add(k); render(); });
+  // tarjetas móviles
+  $('cards').innerHTML = list.map(r => {
+    const st = STATUS[r.status]; const base = $('fBase').value === 'raw' ? r.raw : r.ver;
+    return `<div class="card" data-k="${r.key}"><div class="top"><div><div class="name">${r.name}</div><div class="meta">${r.team} · ${r.isHome ? 'vs' : '@'} ${r.oppName} · ${fmtDT(r.game.startTime)}</div></div>${badge(base)}</div>
+      <div class="grid"><div><b>Mercado</b>${r.market}</div><div><b>Línea</b>${r.line} <span class="meta">(prom ${r.avg ?? '—'})</span></div><div><b>Verificación</b><span class="st ${st[0]}"><i class="dot"></i>${st[1].split(' (')[0]}</span></div><div><b>Apuesta contraria</b>${suggestion(r)}</div></div>
+      <div style="margin-top:8px">${seq(r)}</div>${expanded.has(r.key) ? `<div class="det">${detailTable(r)}</div>` : ''}</div>`;
+  }).join('');
+  $('cards').querySelectorAll('.card').forEach(c => c.onclick = e => { if (e.target.closest('.det')) return; const k = c.dataset.k; expanded.has(k) ? expanded.delete(k) : expanded.add(k); render(); });
+}
+['fMin', 'fDir', 'fVer', 'fGame', 'fTeam', 'fBase'].forEach(id => $(id).onchange = render);
+$('fName').oninput = render;
+$('btnLoad').onclick = () => loadAll(false);
+$('fScope').onchange = () => loadAll(false);
+$('btnHard').onclick = () => { cache = { details: {}, box: {}, meta: {} }; saveCache(); loadAll(true); };
+window.__props = { get rows() { return rows; }, get upcoming() { return upcoming; }, loadAll, filtered };
+// arranque automático
+loadAll(false);
+})();
+</script>
+</body>
+</html>
